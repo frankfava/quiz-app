@@ -2,29 +2,30 @@
 
 namespace App\Models;
 
+use App\Tenancy\Models\Tenant as BaseTenant;
 use Filament\Models\Contracts\HasCurrentTenantLabel;
 use Filament\Models\Contracts\HasName;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class Tenant extends Model implements HasCurrentTenantLabel, HasName
+class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
         'slug',
-        'domain',
         'foc',
     ];
 
     protected $hidden = [
+        'pivot',
         'updated_at',
         'created_at',
     ];
 
     protected $appends = [
-        // 'user_role',
+        'user_role',
     ];
 
     protected $casts = [
@@ -40,6 +41,23 @@ class Tenant extends Model implements HasCurrentTenantLabel, HasName
     {
         static::creating(function (Tenant $tenant) {
             $tenant->slug = str((bool) $tenant->slug ? $tenant->slug : $tenant->name)->slug()->toString();
+        });
+    }
+
+
+    /* ======= Role ======= */
+
+    public function userRole(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->pivot->role ?? null);
+    }
+
+    public function owner(): Attribute
+    {
+        return Attribute::make(get: function () {
+            return $this->users()
+                ->orderBy('pivot_created_at')
+                ->first();
         });
     }
 

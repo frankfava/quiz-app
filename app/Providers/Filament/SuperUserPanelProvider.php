@@ -56,9 +56,8 @@ class SuperUserPanelProvider extends PanelProvider
     {
         $this->panel
             ->id(self::PANEL_ID)
-            ->path(self::PANEL_ID)
-            // ->domain(mainDomain())
-            ->maxContentWidth('screen-2xl');
+            ->path(self::PANEL_ID);
+        // ->domain(tenancy()->mainDomain());
 
         return $this;
     }

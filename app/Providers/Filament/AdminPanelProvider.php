@@ -2,10 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Tenant;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages as FilamentPages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -24,6 +27,12 @@ class AdminPanelProvider extends PanelProvider
      * ID for this panel
      */
     const PANEL_ID = 'admin';
+
+
+    /**
+     * Show Tenant Profile page in tenant dropdown or main menu
+     */
+    const show_tenant_settings_in_menu = true;
 
     /**
      * $panel
@@ -58,7 +67,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id(self::PANEL_ID)
             ->path(self::PANEL_ID);
-        // ->domain(mainDomain());
+        // ->domain(tenancy()->mainDomain());
 
         return $this;
     }
@@ -83,7 +92,11 @@ class AdminPanelProvider extends PanelProvider
     private function auth(): static
     {
         $this->panel
-            ->login();
+            ->login()
+            ->registration()
+            ->profile()
+            ->passwordReset()
+            ->emailVerification();
 
         return $this;
     }
@@ -97,6 +110,22 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 'profile' => Navigation\MenuItem::make()->label('Edit profile'),
                 'logout' => Navigation\MenuItem::make()->label('Log out'),
+            ])
+
+            ->navigationGroups([
+                NavigationGroup::make('Resources'),
+                NavigationGroup::make('Access'),
+                NavigationGroup::make('Settings'),
+            ])
+
+            ->navigationItems([
+                Navigation\NavigationItem::make()
+                    ->label(FilamentPages\Auth\EditProfile::getNavigationLabel())
+                    ->url(fn (): string => FilamentPages\Auth\EditProfile::getUrl())
+                    ->group('Settings')
+                    // ->group(FilamentPages\Auth\EditProfile::getNavigationGroup())
+                    ->icon(FilamentPages\Auth\EditProfile::getNavigationIcon() ?? 'heroicon-o-user-circle'),
+
             ]);
 
         return $this;
@@ -119,16 +148,16 @@ class AdminPanelProvider extends PanelProvider
         $this->panel
             ->discoverWidgets(in: app_path('Filament/Shared/Widgets'), for: 'App\\Filament\\Shared\\Widgets')
             ->discoverWidgets(in: app_path('Filament/User/Widgets'), for: 'App\\Filament\\User\\Widgets')
-            ->widgets([
-                // Widgets\FilamentInfoWidget::class,
-            ]);
+            ->widgets([]);
 
         return $this;
     }
 
     private function tenantConfig(): static
     {
-        //
+        $this->panel
+            ->tenant(Tenant::class, slugAttribute : 'slug', ownershipRelationship: 'tenant')
+            ->tenantRoutePrefix('site');
         return $this;
     }
 
@@ -148,6 +177,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                // Set Tenant as soon as user is logged in
+                \App\Filament\Tenancy\Middleware\SetDefaultFilamentTenant::class,
             ])
             ->tenantMiddleware([]);
 

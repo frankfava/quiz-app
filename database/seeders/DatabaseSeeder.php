@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\SuperUser;
 use App\Models\Tenant;
 use App\Models\User;
@@ -10,6 +11,8 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    const MAX_USERS_PER_TENANT = 1;
+
     /**
      * Seed the application's database.
      */
@@ -27,8 +30,8 @@ class DatabaseSeeder extends Seeder
 
         // Tenants
         $knownTenant1 = Tenant::factory()->create([
-            'name' => 'John and Jane',
-            'slug' => 'futuresmiths',
+            'name' => 'Shawn Spencer',
+            'slug' => 'shawn',
             'domain' => null,
             'foc' => true,
         ]);
@@ -47,5 +50,31 @@ class DatabaseSeeder extends Seeder
                 'email' => 'user'.$index.'@'.env('APP_DOMAIN'),
             ]);
         }
+
+        $knownTenantUserEmail = 'user@'.env('APP_DOMAIN');
+        $knownTenantUser = User::withoutGlobalScope(Tenant::class)->whereEmail($knownTenantUserEmail)->first();
+        if (! $knownTenantUser) {
+            $knownTenantUser = User::factory()->create([
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'email' => $knownTenantUserEmail,
+            ]);
+        }
+
+        // Tenant Users
+        Tenant::all()->each(function ($tenant) use ($knownTenantUser, $knownTenantUserEmail) {
+            $tenant->makeThisCurrent();
+
+            $knownTenantUser->tenants()->attach($tenant, ['role' => UserRole::ADMIN], true);
+
+            if (self::MAX_USERS_PER_TENANT > 1) {
+                $users = User::withoutGlobalScope(Tenant::class)->where('email', '!=', $knownTenantUserEmail)->get();
+                $users = $users->take(rand(1, max(self::MAX_USERS_PER_TENANT, $users->count())));
+
+                $users->each(function ($user) use ($tenant) {
+                    $user->tenants()->attach($tenant, ['role' => UserRole::ADMIN], true);
+                });
+            }
+        });
     }
 }

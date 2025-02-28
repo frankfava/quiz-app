@@ -2,19 +2,27 @@
 
 namespace App\Models;
 
+use App\Relationships\UserHasTenants;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser, HasName
+class User extends Authenticatable implements FilamentUser, HasName, HasTenants
 {
     use HasApiTokens,
         HasFactory,
-        Notifiable;
+        Notifiable,
+        UserHasTenants;
 
     protected $fillable = [
         'first_name',
@@ -47,6 +55,10 @@ class User extends Authenticatable implements FilamentUser, HasName
                 $user->password = bcrypt(Str::random(32));
             }
         });
+
+        static::deleting(function (User $user) {
+            $user->deleteUserFromTenants();
+        });
     }
 
     /* ======= Attributes ======= */
@@ -66,6 +78,25 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function getFilamentName(): string
     {
         return $this->name;
+    }
+
+    /* ======= Tenant Access ======= */
+
+    public function getTenants(Panel $panel): array|Collection
+    {
+        return $this->tenants;
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->tenants->contains($tenant);
+    }
+
+    public function deleteUserFromTenants()
+    {
+        $this->tenants->each(function ($tenant) {
+            $tenant->removeUser($this);
+        });
     }
 
     /* ======= Scopes ======= */
