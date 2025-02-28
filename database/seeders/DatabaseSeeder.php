@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\SuperUser;
 use App\Models\Tenant;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -14,6 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Superuser
+        SuperUser::factory()->create([
+            'name' => 'Frank Fava',
+            'email' => 'frank.fava@gmail.com',
+        ]);
+        SuperUser::factory()->create([
+            'name' => 'Super User',
+            'email' => 'superuser@'.env('APP_DOMAIN'),
         ]);
 
         // Tenants
