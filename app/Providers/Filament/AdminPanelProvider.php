@@ -66,8 +66,8 @@ class AdminPanelProvider extends PanelProvider
         $this->panel
             ->default()
             ->id(self::PANEL_ID)
-            ->path(self::PANEL_ID);
-        // ->domain(tenancy()->mainDomain());
+            ->path(self::PANEL_ID)
+            ->domain(tenancy()->mainDomain());
 
         return $this;
     }
@@ -119,6 +119,12 @@ class AdminPanelProvider extends PanelProvider
             ])
 
             ->navigationItems([
+                // View Site
+                Navigation\NavigationItem::make()
+                    ->label('View your Site')
+                    ->url(fn () => Filament::getTenant()->url, true)
+                    ->icon('heroicon-o-globe-alt'),
+
                 Navigation\NavigationItem::make()
                     ->label(FilamentPages\Auth\EditProfile::getNavigationLabel())
                     ->url(fn (): string => FilamentPages\Auth\EditProfile::getUrl())

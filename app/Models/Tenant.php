@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Relationships\TenantHasUsers;
 use App\Tenancy\Models\Tenant as BaseTenant;
 use Filament\Models\Contracts\HasCurrentTenantLabel;
 use Filament\Models\Contracts\HasName;
@@ -10,7 +11,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
 {
-    use HasFactory;
+    use HasFactory,
+        TenantHasUsers;
 
     protected $fillable = [
         'name',
@@ -44,6 +46,41 @@ class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
         });
     }
 
+    /* ======= URL ======= */
+
+    public static function getUrl(self $tenant): string
+    {
+        return route('tenant.app', ['domain' => static::getActiveDomain($tenant)], true);
+    }
+
+    public static function getActiveDomain(self $tenant): string
+    {
+        if (($domain = $tenant->attributes['domain'])) {
+            return $domain;
+        }
+
+        return $tenant->slug.'.'.tenancy()->mainDomain();
+    }
+
+    public function domain(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => $value ? self::getUrl($this) : null);
+    }
+
+    public function url(): Attribute
+    {
+        return Attribute::make(get: fn () => static::getUrl($this));
+    }
+
+    public function activeDomain(): Attribute
+    {
+        return Attribute::make(get: fn () => parse_url($this->url, PHP_URL_HOST));
+    }
+
+    public function adminUrl(): Attribute
+    {
+        return Attribute::make(get: fn () => route('filament.admin.pages.dashboard', ['tenant' => $this->slug]));
+    }
 
     /* ======= Role ======= */
 
