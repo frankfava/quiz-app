@@ -14,11 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
         ]);
 
         // Tenants
@@ -34,5 +29,14 @@ class DatabaseSeeder extends Seeder
             'foc' => true,
         ]);
         Tenant::factory(3)->create();
+
+        // Users
+        foreach (range(1, 5) as $index) {
+            User::factory()->create([
+                'first_name' => ($fn = fake()->firstName),
+                'last_name' => ($ln = fake()->lastName),
+                'email' => 'user'.$index.'@'.env('APP_DOMAIN'),
+            ]);
+        }
     }
 }
