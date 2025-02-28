@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Providers\Filament;
+
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation;
+use Filament\Pages as FilamentPages;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+class AdminPanelProvider extends PanelProvider
+{
+    /**
+     * ID for this panel
+     */
+    const PANEL_ID = 'admin';
+
+    /**
+     * $panel
+     *
+     * @var Panel
+     */
+    private $panel;
+
+    public function panel(Panel $panel): Panel
+    {
+        $this->panel = $panel;
+
+        // Apply Config
+        $this
+            ->setup()
+            ->theme()
+            ->auth()
+            ->tenantConfig()
+            ->navigation()
+            ->pages()
+            ->widgets()
+            ->middleware()
+            ->panelBoot();
+
+        return $this->panel;
+
+    }
+
+    private function setup(): static
+    {
+        $this->panel
+            ->default()
+            ->id(self::PANEL_ID)
+            ->path(self::PANEL_ID);
+        // ->domain(mainDomain());
+
+        return $this;
+    }
+
+    private function theme(): static
+    {
+        $this->panel
+            ->maxContentWidth('screen-2xl')
+            // ->viteTheme(['resources/filament/css/theme.css'])
+            ->colors([
+                'primary' => Color::Amber,
+                'danger' => Color::Red,
+                'info' => Color::Blue,
+                'gray' => Color::Slate,
+                'success' => Color::Emerald,
+                'warning' => Color::Yellow,
+            ]);
+
+        return $this;
+    }
+
+    private function auth(): static
+    {
+        $this->panel
+            ->login();
+
+        return $this;
+    }
+
+    private function navigation(): static
+    {
+        $this->panel
+            ->globalSearchKeyBindings(['command+k'])
+            ->sidebarCollapsibleOnDesktop()
+
+            ->userMenuItems([
+                'profile' => Navigation\MenuItem::make()->label('Edit profile'),
+                'logout' => Navigation\MenuItem::make()->label('Log out'),
+            ]);
+
+        return $this;
+    }
+
+    private function pages(): static
+    {
+        $this->panel
+            ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')
+            ->discoverPages(in: app_path('Filament/User/Pages'), for: 'App\\Filament\\User\\Pages')
+            ->pages([
+                FilamentPages\Dashboard::class,
+            ]);
+
+        return $this;
+    }
+
+    private function widgets(): static
+    {
+        $this->panel
+            ->discoverWidgets(in: app_path('Filament/Shared/Widgets'), for: 'App\\Filament\\Shared\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/User/Widgets'), for: 'App\\Filament\\User\\Widgets')
+            ->widgets([
+                // Widgets\FilamentInfoWidget::class,
+            ]);
+
+        return $this;
+    }
+
+    private function tenantConfig(): static
+    {
+        //
+        return $this;
+    }
+
+    private function middleware(): static
+    {
+        $this->panel
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ])
+            ->tenantMiddleware([]);
+
+        return $this;
+    }
+
+    private function panelBoot(): static
+    {
+        $this->panel->bootUsing(function (Panel $panel) {
+            //
+        });
+
+        return $this;
+    }
+}
