@@ -126,12 +126,21 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-globe-alt'),
 
                 Navigation\NavigationItem::make()
-                    ->label(FilamentPages\Auth\EditProfile::getNavigationLabel())
-                    ->url(fn (): string => FilamentPages\Auth\EditProfile::getUrl())
-                    ->group('Settings')
-                    // ->group(FilamentPages\Auth\EditProfile::getNavigationGroup())
-                    ->icon(FilamentPages\Auth\EditProfile::getNavigationIcon() ?? 'heroicon-o-user-circle'),
+                    ->label(Pages\Auth\EditProfile::getNavigationLabel())
+                    ->url(fn (): string => Pages\Auth\EditProfile::getUrl())
+                    ->group(Pages\Auth\EditProfile::getNavigationGroup())
+                    ->icon(Pages\Auth\EditProfile::getNavigationIcon()),
 
+                // Tenant Profile/ Settings
+                Navigation\NavigationItem::make()
+                    ->visible(function (): bool {
+                        return self::show_tenant_settings_in_menu &&
+                            Pages\Tenancy\EditTenantProfile::canView(Filament::getTenant());
+                    })
+                    ->label(Pages\Tenancy\EditTenantProfile::getNavigationLabel())
+                    ->url(fn (): string => Pages\Tenancy\EditTenantProfile::getUrl())
+                    ->group(Pages\Tenancy\EditTenantProfile::getNavigationGroup())
+                    ->icon(Pages\Tenancy\EditTenantProfile::getNavigationIcon()),
             ]);
 
         return $this;
@@ -163,7 +172,19 @@ class AdminPanelProvider extends PanelProvider
     {
         $this->panel
             ->tenant(Tenant::class, slugAttribute : 'slug', ownershipRelationship: 'tenant')
-            ->tenantRoutePrefix('site');
+            ->tenantRoutePrefix('site')
+            ->tenantProfile(Pages\Tenancy\EditTenantProfile::class)
+            ->tenantRegistration(Pages\Tenancy\RegisterTenant::class) // Show by Policy
+            ->tenantMenuItems([
+                'profile' => Navigation\MenuItem::make()
+                    ->hidden(self::show_tenant_settings_in_menu)
+                    ->label(Pages\Tenancy\EditTenantProfile::getNavigationLabel())
+                    ->icon(Pages\Tenancy\EditTenantProfile::getNavigationIcon()),
+                'register' => Navigation\MenuItem::make()
+                    ->label(Pages\Tenancy\RegisterTenant::getLabel())
+                    ->icon(Pages\Tenancy\RegisterTenant::$navigationIcon),
+            ]);
+
         return $this;
     }
 
