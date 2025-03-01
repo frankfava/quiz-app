@@ -71,6 +71,8 @@ class UsersRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->visible(fn (User $record) => authorize('update', $record)),
+                ImpersonateUser::make()
+                    ->visible(fn (User $record) => authorize('update', $record)),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\EditAction::make()
                         ->url(fn (Model $record): string => Resources\UserResource::getUrl('edit', [$record]))

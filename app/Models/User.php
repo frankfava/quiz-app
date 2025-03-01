@@ -87,6 +87,11 @@ class User extends Authenticatable implements FilamentUser, HasName, HasTenants
         return $this->name;
     }
 
+    public function canBeImpersonated()
+    {
+        return true || (bool) $this->tenants()->count();
+    }
+
     /* ======= Tenant Access ======= */
 
     public function getTenants(Panel $panel): array|Collection

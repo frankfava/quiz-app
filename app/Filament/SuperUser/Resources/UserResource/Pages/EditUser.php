@@ -2,6 +2,7 @@
 
 namespace App\Filament\SuperUser\Resources\UserResource\Pages;
 
+use App\Filament\SuperUser\Actions\ImpersonateUser;
 use App\Filament\SuperUser\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -14,6 +15,7 @@ class EditUser extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
+            ImpersonateUser::make(),
         ];
     }
 }

@@ -51,4 +51,9 @@ class SuperUser extends Authenticatable implements FilamentUser
     {
         return true;
     }
+
+    public function canImpersonate()
+    {
+        return true;
+    }
 }

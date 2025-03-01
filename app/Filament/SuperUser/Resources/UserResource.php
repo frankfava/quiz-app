@@ -5,6 +5,7 @@ namespace App\Filament\SuperUser\Resources;
 use App\Filament\Resource;
 use App\Filament\SuperUser\Resources\UserResource\Pages;
 use App\Filament\SuperUser\Resources\UserResource\RelationManagers;
+use App\Filament\SuperUser\Tables\Actions\ImpersonateUser;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -101,6 +102,8 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
+                ImpersonateUser::make()
+                    ->visible(fn (User $record): bool => auth()->user()->can('update', $record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
