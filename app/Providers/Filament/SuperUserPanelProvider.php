@@ -66,7 +66,7 @@ class SuperUserPanelProvider extends PanelProvider
     {
         $this->panel
             ->maxContentWidth('screen-2xl')
-            // ->viteTheme(['resources/filament/css/theme.css', 'resources/filament/js/filament.js'])
+            ->viteTheme(['resources/filament/css/theme.css', 'resources/filament/js/filament.js'])
             ->colors([
                 'primary' => Color::Slate,
                 'danger' => Color::Red,

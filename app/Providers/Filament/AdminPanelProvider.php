@@ -76,7 +76,7 @@ class AdminPanelProvider extends PanelProvider
     {
         $this->panel
             ->maxContentWidth('screen-2xl')
-            // ->viteTheme(['resources/filament/css/theme.css'])
+            ->viteTheme(['resources/filament/css/theme.css', 'resources/filament/js/filament.js'])
             ->colors([
                 'primary' => Color::Amber,
                 'danger' => Color::Red,
