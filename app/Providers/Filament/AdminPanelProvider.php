@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\User\Pages;
 use App\Models\Tenant;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -27,7 +28,6 @@ class AdminPanelProvider extends PanelProvider
      * ID for this panel
      */
     const PANEL_ID = 'admin';
-
 
     /**
      * Show Tenant Profile page in tenant dropdown or main menu
@@ -93,8 +93,8 @@ class AdminPanelProvider extends PanelProvider
     {
         $this->panel
             ->login()
-            ->registration()
-            ->profile()
+            // ->registration(action : Pages\Auth\Register::class)
+            ->profile(page : Pages\Auth\EditProfile::class)
             ->passwordReset()
             ->emailVerification();
 
