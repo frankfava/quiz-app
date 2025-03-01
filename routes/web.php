@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,7 +27,9 @@ Route::name('tenant.')
     ->domain('{domain}')
     ->where(['domain' => '.*'])
     ->group(function () {
-        Route::get('/{any?}')// , fn (Request $request) => dd($request->tenant->toArray(), 1))
+        Route::get('/{any?}', function (Request $request) {
+            return Blade::render('<pre>{{ print_r($tenant->toArray(),1) }}</pre>', ['tenant' => $request->tenant->load('users')]);
+        })
             ->where(['any' => '.*'])
             ->name('app');
     });

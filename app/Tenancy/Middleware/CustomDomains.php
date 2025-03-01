@@ -26,6 +26,10 @@ class CustomDomains
         $domain = $request->getHost();
         $tenant = null;
 
+        if ($domain == $this->tenancy->mainDomain()) {
+            return $next($request);
+        }
+
         if ($subdomain = $this->makeSubdomain($domain)) {
             $tenant = Tenant::whereSlug($subdomain)->first();
         } else {
