@@ -5,9 +5,12 @@ namespace App\Providers;
 use App\Rules\Slug;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Notifications;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent;
 use Illuminate\Encryption\Encrypter;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
@@ -92,6 +95,14 @@ class AppServiceProvider extends ServiceProvider
         // Override Verify Email so it can use the filament verification url
         Notifications\VerifyEmail::createUrlUsing(function ($notifiable) {
             return Filament::getVerifyEmailUrl($notifiable);
+        });
+    }
+
+    /** Set the API rate limit */
+    protected function setApiRateLimit(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(300)->by($request->user()?->id ?: $request->ip());
         });
     }
 }
