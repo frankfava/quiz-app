@@ -26,7 +26,7 @@ Route::name('tenant.')
     ->domain('{domain}')
     ->where(['domain' => '.*'])
     ->group(function () {
-        Route::get('/{any?}', fn (Request $request) => dd($request->tenant->toArray()))
+        Route::get('/{any?}')// , fn (Request $request) => dd($request->tenant->toArray(), 1))
             ->where(['any' => '.*'])
             ->name('app');
     });
