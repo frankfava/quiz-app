@@ -26,10 +26,6 @@ class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
         'created_at',
     ];
 
-    protected $appends = [
-        'user_role',
-    ];
-
     protected $casts = [
         'name' => 'string',
         'slug' => 'string',
@@ -83,11 +79,6 @@ class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
     }
 
     /* ======= Role ======= */
-
-    public function userRole(): Attribute
-    {
-        return Attribute::make(get: fn () => $this->pivot->role ?? null);
-    }
 
     public function owner(): Attribute
     {

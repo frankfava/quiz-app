@@ -32,12 +32,14 @@ class User extends Authenticatable implements FilamentUser, HasName, HasTenants
     ];
 
     protected $hidden = [
+        'pivot',
         'password',
         'remember_token',
     ];
 
     protected $appends = [
         'name',
+        'user_role',
     ];
 
     protected $casts = [
@@ -66,6 +68,11 @@ class User extends Authenticatable implements FilamentUser, HasName, HasTenants
     public function name(): Attribute
     {
         return Attribute::make(get: fn () => implode(' ', array_filter([$this->first_name, $this->last_name])));
+    }
+
+    public function userRole(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->pivot ? ($this->pivot->role ?? null) : null);
     }
 
     /* ======= Filament Access ======= */
