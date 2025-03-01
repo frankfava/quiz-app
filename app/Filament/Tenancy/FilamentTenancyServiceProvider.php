@@ -3,6 +3,7 @@
 namespace App\Filament\Tenancy;
 
 use App\Models\Tenant;
+use App\Tenancy\Tenancy;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,6 +29,12 @@ class FilamentTenancyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Get the main domain
+        Tenancy::getMainDomainWith(fn () => env('APP_DOMAIN'));
+
+        // Get the Tenant Model Class
+        Tenancy::getTenantModelClassWith(fn () => class_exists($filament = \Filament\Facades\Filament::class) ? $filament::getTenantModel() : Tenant::class);
+
         // Change the host when the tenant is active
         URL::formatHostUsing(function ($root, $route) {
             if (($tenant = Tenant::current()) && $route && $route->named('tenant.*')) {

@@ -3,17 +3,26 @@
 namespace App\Tenancy;
 
 use App\Tenancy\Models\Tenant as BaseTenant;
+use Closure;
 
 class Tenancy
 {
     const SWITCH_TENANT_TASKS_CONTAINER_KEY = 'FilamentTenantTasks';
+
+    private static ?Closure $getMainDomainWith = null;
+
+    private static ?Closure $getTenantModelClassWith = null;
 
     /**
      * Get main domain
      */
     public function mainDomain(): string
     {
-        return env('APP_DOMAIN');
+        if (self::$getMainDomainWith instanceof Closure) {
+            return call_user_func(self::$getMainDomainWith, $this);
+        }
+
+        return $this->checkDomain(parse_url(url('/'), PHP_URL_HOST))['mainDomain'];
     }
 
     /**
@@ -37,7 +46,12 @@ class Tenancy
      */
     public function getTenantModelClass(): ?string
     {
-        return class_exists($filament = \Filament\Facades\Filament::class) ? $filament::getTenantModel() : BaseTenant::class;
+        $modelClass = null;
+        if (self::$getTenantModelClassWith instanceof Closure) {
+            $modelClass = call_user_func(self::$getTenantModelClassWith, $this);
+        }
+
+        return $modelClass ?? BaseTenant::class;
     }
 
     /**
@@ -181,5 +195,34 @@ class Tenancy
         }
 
         return $current->is($tenant);
+    }
+
+    public static function getMainDomainWith(Closure $closure): void
+    {
+        self::$getMainDomainWith = $closure;
+    }
+
+    public static function getTenantModelClassWith(Closure $closure): void
+    {
+        self::$getTenantModelClassWith = $closure;
+    }
+
+    public function checkDomain(string $hostname): array
+    {
+        $parts = explode('.', $hostname);
+
+        $isLocalhost = count($parts) === 1 && $hostname == 'localhost';
+        $isIpAddress = count(array_filter($parts, 'is_numeric')) === count($parts);
+
+        // If we're on localhost or an IP address, then we're not visiting a subdomain.
+        $isSubDomain = ! $isIpAddress && count($parts) === 3;
+
+        return [
+            'full' => $hostname,
+            'mainDomain' => $isSubDomain ? implode('.', [$parts[1], $parts[2]]) : $hostname,
+            'subdomain' => ! $isSubDomain ? null : $parts[0],
+            'isLocalhost' => $isLocalhost,
+            'isIpAddress' => $isIpAddress,
+        ];
     }
 }

@@ -56,21 +56,12 @@ class CustomDomains
 
     protected function makeSubdomain(string $hostname)
     {
-        $parts = explode('.', $hostname);
+        $check = $this->tenancy->checkDomain($hostname);
 
-        $isLocalhost = count($parts) === 1;
-        $isIpAddress = count(array_filter($parts, 'is_numeric')) === count($parts);
-
-        // If we're on localhost or an IP address, then we're not visiting a subdomain.
-        $isACentralDomain = in_array($hostname, [$this->tenancy->mainDomain()], true);
-        $notADomain = $isLocalhost || $isIpAddress;
-        $thirdPartyDomain = ! str($hostname)->endsWith($this->tenancy->mainDomain());
-
-        if ($isACentralDomain || $notADomain || $thirdPartyDomain) {
+        if (! $check['subdomain'] || ! str($hostname)->endsWith($this->tenancy->mainDomain())) {
             return false;
         }
 
-        //The index of the subdomain fragment in the hostname split by `.`. 0 for first fragment, 1 if you prefix your subdomain fragments with `www`.
-        return $parts[0];
+        return $check['subdomain'];
     }
 }

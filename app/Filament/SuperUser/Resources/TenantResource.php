@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class TenantResource extends Resource
@@ -52,6 +53,9 @@ class TenantResource extends Resource
                         Forms\Components\Toggle::make('foc')
                             ->label('Free of Charge')
                             ->inline(false),
+                        Forms\Components\Placeholder::make('url')
+                            ->label('Site URL')
+                            ->content(fn (Tenant $record) => new HtmlString('<a href="'.$record->url.'" class="font-semibold block mb-2" style="font-size:1.2em;" target="_blank">'.$record->url.'</a>')),
                     ]),
             ]);
     }
