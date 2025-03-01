@@ -31,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Facades\Vite::prefetch(concurrency: 3);
 
         $this->changeDatabaseEncryptionKey();
+        $this->setupValidationRuleMacros();
+        $this->addStrMacros();
+        $this->updateUrlsForFilament();
     }
 
     /**
@@ -46,5 +49,49 @@ class AppServiceProvider extends ServiceProvider
         }
         $key = base64_decode(Str::after($key, 'base64:'));
         Eloquent\Model::encryptUsing(new Encrypter($key, config('app.cipher')));
+    }
+
+    /** Setup Validation rule macros */
+    protected function setupValidationRuleMacros(): void
+    {
+        $macros = [
+            Slug::$validationStr => Slug::class,
+        ];
+
+        collect($macros)
+            ->each(function ($class, $macro) {
+                if (method_exists($class, 'convertToValidationString')) {
+                    Rule::macro($macro, [app($class), 'convertToValidationString']);
+                }
+                if (method_exists($class, 'validate')) {
+                    Facades\Validator::extend($macro, [app($class), 'validate']);
+                }
+            });
+    }
+
+    /** Add Macros to the Str class. */
+    protected function addStrMacros(): void
+    {
+        Str::macro('possessive', function ($subject) {
+            return "$subject'".(Str::endsWith($subject, ['s', 'S']) ? '' : 's');
+        });
+
+        Stringable::macro('possessive', function () {
+            return new Stringable(Str::possessive($this->value));
+        });
+    }
+
+    /** Update URLs for Filament Notifications */
+    protected function updateUrlsForFilament(): void
+    {
+        // Override Reset Password URL so it can use the filament url
+        Notifications\ResetPassword::createUrlUsing(function ($notifiable, $token) {
+            return Filament::getResetPasswordUrl($token, $notifiable);
+        });
+
+        // Override Verify Email so it can use the filament verification url
+        Notifications\VerifyEmail::createUrlUsing(function ($notifiable) {
+            return Filament::getVerifyEmailUrl($notifiable);
+        });
     }
 }
