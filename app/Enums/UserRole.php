@@ -9,7 +9,7 @@ enum UserRole: string
     public static function getLabels(): array
     {
         return [
-            self::ADMIN => 'Admin',
+            self::ADMIN->value => 'Admin',
         ];
     }
 
