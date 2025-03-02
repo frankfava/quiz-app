@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Question;
+use App\Models\Quiz;
 use App\Models\SuperUser;
 use App\Models\Tenant;
 use App\Models\User;
@@ -75,6 +78,25 @@ class DatabaseSeeder extends Seeder
             config(['tenancy.restrict_to_tenant_count_per_user' => $tenantCountPerUser]);
             config(['tenancy.restrict_to_user_count_per_tenant' => $userCountPerTenant]);
         }
+
+        // Create Categories
+        $categories = Category::factory()->count(5)->create();
+
+        // Create Questions for Each Category
+        Question::factory()->count(60)->create();
+
+        // // Create Quizzes and Assign Users
+        $users = User::all();
+        Quiz::factory()->count(4)->create([
+            'created_by_id' => $users->random()->id,
+        ]);
+
+        // Free Quiz
+        Quiz::factory()->create([
+            'label' => 'Free Trivia',
+            'tenant_id' => null,
+            'created_by_id' => null,
+        ]);
 
         // Tenant Users
         $tenants->each(function ($tenant) use ($knownTenantUserEmail, $userCountPerTenant) {
