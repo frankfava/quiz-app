@@ -51,6 +51,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $tenants = Tenant::all();
+
         $knownTenantUserEmail = 'user@'.env('APP_DOMAIN');
         $knownTenantUser = User::withoutGlobalScope(Tenant::class)->whereEmail($knownTenantUserEmail)->first();
         if (! $knownTenantUser) {
@@ -61,15 +63,26 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $tenantCountPerUser = config('tenancy.restrict_to_tenant_count_per_user');
+        $userCountPerTenant = config('tenancy.restrict_to_user_count_per_tenant');
+
+        if ($knownTenantUser) {
+            config(['tenancy.restrict_to_tenant_count_per_user' => null]);
+            config(['tenancy.restrict_to_user_count_per_tenant' => null]);
+
+            $knownTenantUser->tenants()->sync($tenants->pluck('id')->toArray(), ['role' => UserRole::ADMIN], true);
+
+            config(['tenancy.restrict_to_tenant_count_per_user' => $tenantCountPerUser]);
+            config(['tenancy.restrict_to_user_count_per_tenant' => $userCountPerTenant]);
+        }
+
         // Tenant Users
-        Tenant::all()->each(function ($tenant) use ($knownTenantUser, $knownTenantUserEmail) {
+        $tenants->each(function ($tenant) use ($knownTenantUserEmail, $userCountPerTenant) {
             $tenant->makeThisCurrent();
 
-            $knownTenantUser->tenants()->attach($tenant, ['role' => UserRole::ADMIN], true);
-
-            if (self::MAX_USERS_PER_TENANT > 1) {
+            if ((int) $userCountPerTenant > 1) {
                 $users = User::withoutGlobalScope(Tenant::class)->where('email', '!=', $knownTenantUserEmail)->get();
-                $users = $users->take(rand(1, max(self::MAX_USERS_PER_TENANT, $users->count())));
+                $users = $users->take(rand(1, max((int) $userCountPerTenant, $users->count())));
 
                 $users->each(function ($user) use ($tenant) {
                     $user->tenants()->attach($tenant, ['role' => UserRole::ADMIN], true);

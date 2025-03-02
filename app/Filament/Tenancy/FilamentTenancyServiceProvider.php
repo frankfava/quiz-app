@@ -30,7 +30,7 @@ class FilamentTenancyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Get the main domain
-        Tenancy::getMainDomainWith(fn () => env('APP_DOMAIN'));
+        Tenancy::getMainDomainWith(fn () => config('tenancy.main_domain'));
 
         // Get the Tenant Model Class
         Tenancy::getTenantModelClassWith(fn () => class_exists($filament = \Filament\Facades\Filament::class) ? $filament::getTenantModel() : Tenant::class);
