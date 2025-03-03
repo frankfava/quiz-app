@@ -40,13 +40,18 @@ class Question extends Model
 
         static::creating(function (self $question) {
             if (empty($question->content_hash)) {
-                $contentHash = substr(md5(json_encode($question->toArray())), 0, 12);
+                $contentHash = self::generateContentHash($question->toArray());
                 $question->content_hash = $contentHash;
             }
             if (empty($question->difficulty)) {
                 $question->difficulty = QuestionDifficulty::MEDIUM->value;
             }
         });
+    }
+
+    public static function generateContentHash(array $questionData): string
+    {
+        return substr(md5(json_encode($questionData)), 0, 12);
     }
 
     /** Scope to get questions by type */
