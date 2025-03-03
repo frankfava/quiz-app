@@ -21,6 +21,33 @@ class FetchTriviaQuestions
 
     const INVALID_QUESTION = 'INVALID_QUESTION';
 
+    const OPEN_TRIVIA_CATEGORIES = [
+        9 => 'General Knowledge',
+        10 => 'Entertainment: Books',
+        11 => 'Entertainment: Film',
+        12 => 'Entertainment: Music',
+        13 => 'Entertainment: Musicals & Theatres',
+        14 => 'Entertainment: Television',
+        15 => 'Entertainment: Video Games',
+        16 => 'Entertainment: Board Games',
+        17 => 'Science & Nature',
+        18 => 'Science: Computers',
+        19 => 'Science: Mathematics',
+        20 => 'Mythology',
+        21 => 'Sports',
+        22 => 'Geography',
+        23 => 'History',
+        24 => 'Politics',
+        25 => 'Art',
+        26 => 'Celebrities',
+        27 => 'Animals',
+        28 => 'Vehicles',
+        29 => 'Entertainment: Comics',
+        30 => 'Science: Gadgets',
+        31 => 'Entertainment: Japanese Anime & Manga',
+        32 => 'Entertainment: Cartoon & Animations',
+    ];
+
     public function __construct(
         readonly protected ?int $totalQuestions = 1000,
         readonly protected ?QuestionDifficulty $difficulty = null,
@@ -43,16 +70,24 @@ class FetchTriviaQuestions
             'failed' => 0,
         ];
 
-        while ($result->fetchedQuestions < $this->totalQuestions) {
+        $type = match ($this->type) {
+            QuestionType::MULTIPLE_CHOICE => 'multiple',
+            QuestionType::BOOLEAN => 'boolean',
+            default => null
+        };
 
-            if ($this->type && ! in_array($this->type, ['multiple', 'boolean'])) {
+        $totalQuestions = max(0, min(10000, $this->totalQuestions));
+
+        while ($result->fetchedQuestions < $totalQuestions) {
+
+            if ($type && ! in_array($type, ['multiple', 'boolean'])) {
                 throw new InvalidArgumentException('Invalid type. Use "multiple" or "boolean".');
             }
 
             $response = Http::get(self::API_URL, array_filter([
                 'amount' => $this->questionsPerBatch,
                 'difficulty' => $this->difficulty ? $this->difficulty->value : null,
-                'type' => $this->type ? $this->type->value : null,
+                'type' => $type ? $type : null,
                 'category' => $this->category ? $this->checkCategory($this->category) : null,
             ]));
             $json = $response->json();
@@ -65,7 +100,7 @@ class FetchTriviaQuestions
 
             if (! empty($questions)) {
                 foreach ($questions as $question) {
-                    if ($result->fetchedQuestions >= $this->totalQuestions) {
+                    if ($result->fetchedQuestions >= $totalQuestions) {
                         break;
                     }
                     $result->fetchedQuestions++;
@@ -105,7 +140,7 @@ class FetchTriviaQuestions
                 };
 
                 $options = match ($questionType) {
-                    QuestionType::MULTIPLE_CHOICE => $options = array_merge([$questionData['correct_answer']], $questionData['incorrect_answers']),
+                    QuestionType::MULTIPLE_CHOICE => collect(array_merge([$questionData['correct_answer']], $questionData['incorrect_answers']))->shuffle()->toArray(),
                     default => null,
                 };
 
@@ -119,11 +154,10 @@ class FetchTriviaQuestions
                     'question_type' => $questionType,
                     'category_id' => $this->getCategoryId($questionData['category']),
                     'difficulty' => $questionData['difficulty'],
-                    'correct_answer' => $questionData['correct_answer'],
                     'options' => $mappedOptions,
                     'correct_answer' => $questionType === QuestionType::MULTIPLE_CHOICE
                         ? [array_search($questionData['correct_answer'], $mappedOptions)]
-                        : (bool) $questionData['correct_answer'],
+                        : (bool) ($questionData['correct_answer'] == 'True'),
                     'content_hash' => $contentHash,
                 ]);
 
@@ -153,32 +187,7 @@ class FetchTriviaQuestions
     /** Get Open Trivia DB Category */
     protected function checkCategory(int|string $categoryNameOrId): ?int
     {
-        $categories = [
-            9 => 'General Knowledge',
-            10 => 'Entertainment: Books',
-            11 => 'Entertainment: Film',
-            12 => 'Entertainment: Music',
-            13 => 'Entertainment: Musicals & Theatres',
-            14 => 'Entertainment: Television',
-            15 => 'Entertainment: Video Games',
-            16 => 'Entertainment: Board Games',
-            17 => 'Science & Nature',
-            18 => 'Science: Computers',
-            19 => 'Science: Mathematics',
-            20 => 'Mythology',
-            21 => 'Sports',
-            22 => 'Geography',
-            23 => 'History',
-            24 => 'Politics',
-            25 => 'Art',
-            26 => 'Celebrities',
-            27 => 'Animals',
-            28 => 'Vehicles',
-            29 => 'Entertainment: Comics',
-            30 => 'Science: Gadgets',
-            31 => 'Entertainment: Japanese Anime & Manga',
-            32 => 'Entertainment: Cartoon & Animations',
-        ];
+        $categories = self::OPEN_TRIVIA_CATEGORIES;
 
         if (is_numeric($categoryNameOrId)) {
             return $categories[$categoryNameOrId] ? $categoryNameOrId : null;

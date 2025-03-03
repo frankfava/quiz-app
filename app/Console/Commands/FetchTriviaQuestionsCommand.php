@@ -44,7 +44,7 @@ class FetchTriviaQuestionsCommand extends Command
             category: $category,
             questionsPerBatch: $questionsPerBatch,
             afterEachTry: function ($aggregateCount, $fetchedCount) {
-                note("Fetched up to $fetchedCount ".str('question')->plural($fetchedCount).". Total: $aggregateCount");
+                note("Fetched $fetchedCount ".str('question')->plural($fetchedCount)." so far. Total: $aggregateCount");
             },
             onCompletion: fn ($fetchedCount) => info("Fetched $fetchedCount questions.")
         );
