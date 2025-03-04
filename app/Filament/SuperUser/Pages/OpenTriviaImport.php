@@ -25,9 +25,11 @@ class OpenTriviaImport extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'OpenTrivia Import';
 
-    protected static ?string $navigationGroup = 'Quizzes';
+    protected static ?string $navigationGroup = 'Tools';
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+
+    protected static ?int $navigationSort = -1;
 
     protected ?string $subheading = 'Populate the Question Bank with trivia questions from the OpenTrivia Database.';
 

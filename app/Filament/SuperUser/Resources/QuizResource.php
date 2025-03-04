@@ -20,33 +20,34 @@ class QuizResource extends Resource
 
     protected static ?string $navigationGroup = 'Quizzes';
 
+    protected static ?int $navigationSort = 1;
+
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('viewAny', Quiz::class);
+        return ($user = auth()->user()) && $user->can('viewAny', Quiz::class);
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('label')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('tenant_id')
-                    ->label('Tenant')
-                    ->options(Tenant::pluck('name', 'id')->toArray())
-                    ->nullable()
-                    ->searchable(),
-                Forms\Components\Select::make('created_by_id')
-                    ->label('Created By')
-                    ->options(User::pluck('email', 'id')->toArray())
-                    ->required()
-                    ->searchable(),
-                Forms\Components\KeyValue::make('meta')
-                    ->label('Meta Data')
-                    ->nullable()
-                    ->keyLabel('Key')
-                    ->valueLabel('Value'),
+                Forms\Components\Section::make()
+                    ->inlineLabel()
+                    ->schema([
+                        Forms\Components\TextInput::make('label')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Select::make('tenant_id')
+                            ->label('Tenant')
+                            ->options(Tenant::pluck('name', 'id')->toArray())
+                            ->nullable()
+                            ->searchable(),
+                        Forms\Components\Select::make('created_by_id')
+                            ->label('Owner')
+                            ->options(User::pluck('email', 'id')->toArray())
+                            ->required()
+                            ->searchable(),
+                    ]),
             ]);
     }
 
@@ -61,13 +62,20 @@ class QuizResource extends Resource
                     ->label('Tenant')
                     ->sortable()
                     ->default('Free'),
-                Tables\Columns\TextColumn::make('owner.email')
-                    ->label('Created By')
+                Tables\Columns\TextColumn::make('owner.name')
+                    ->label('Owner')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->filters([
                 Tables\Filters\SelectFilter::make('tenant_id')
                     ->label('Tenant')
