@@ -3,6 +3,7 @@
 namespace App\Filament\SuperUser\Resources;
 
 use App\Filament\SuperUser\Resources\QuizResource\Pages;
+use App\Filament\SuperUser\Resources\QuizResource\RelationManagers;
 use App\Models\Quiz;
 use App\Models\Tenant;
 use App\Models\User;
@@ -44,7 +45,7 @@ class QuizResource extends Resource
                             ->searchable(),
                         Forms\Components\Select::make('created_by_id')
                             ->label('Owner')
-                            ->options(User::pluck('email', 'id')->toArray())
+                            ->options(User::all()->pluck('name', 'id')->toArray())
                             ->required()
                             ->searchable(),
                     ]),
@@ -60,11 +61,17 @@ class QuizResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tenant.name')
                     ->label('Tenant')
-                    ->sortable()
-                    ->default('Free'),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('owner.name')
                     ->label('Owner')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('question_count')
+                    ->label('Questions')
+                    ->numeric()
+                    ->alignCenter()
+                    ->state(function (Quiz $record) {
+                        return $record->questions->count();
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -96,6 +103,13 @@ class QuizResource extends Resource
             'index' => Pages\ListQuizzes::route('/'),
             'create' => Pages\CreateQuiz::route('/create'),
             'edit' => Pages\EditQuiz::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\QuestionsRelationManager::class,
         ];
     }
 }

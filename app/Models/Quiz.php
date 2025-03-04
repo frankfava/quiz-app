@@ -58,4 +58,12 @@ class Quiz extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function questions()
+    {
+        return $this->belongsToMany(Question::class, 'quiz_questions')
+            ->using(QuizQuestion::class)
+            ->withPivot('order')
+            ->orderBy('quiz_questions.order');
+    }
 }

@@ -82,6 +82,8 @@ class Question extends Model
             case QuestionType::OPEN_TEXT:
                 return strtolower($userAnswer) === strtolower($correct[0]);
             case QuestionType::BOOLEAN:
+                $correct = array_map('boolval', is_array($correct) ? $correct : [$correct]);
+
                 return (bool) $userAnswer === (bool) $correct[0];
             case QuestionType::MULTIPLE_RESPONSE:
                 return json_encode($userAnswer, JSON_NUMERIC_CHECK) === json_encode($correct, JSON_NUMERIC_CHECK);
@@ -104,8 +106,51 @@ class Question extends Model
         ]);
     }
 
+    public function getOptionsAndAnswerHtml(): string
+    {
+        $options = $this->options ?? [];
+        $correctAnswer = $this->correct_answer;
+
+        switch ($this->question_type) {
+            case QuestionType::MULTIPLE_CHOICE:
+            case QuestionType::MULTIPLE_RESPONSE:
+                $formatted = [];
+                foreach ($options as $key => $value) {
+                    $isCorrect = $this->isCorrect($key);
+                    $style = $isCorrect ? 'color: green;' : '';
+                    $formatted[] = "<span style='{$style}'>{$key}: {$value}</span>";
+                }
+
+                return implode(' | ', $formatted);
+
+            case QuestionType::BOOLEAN:
+                $correctBool = is_array($correctAnswer) ? boolval($correctAnswer[0]) : boolval($correctAnswer);
+                $trueStyle = $correctBool ? 'color: green;' : '';
+                $falseStyle = ! $correctBool ? 'color: green;' : '';
+
+                return "<span style='{$trueStyle}'>True</span> | <span style='{$falseStyle}'>False</span>";
+
+            case QuestionType::OPEN_TEXT:
+            case QuestionType::ORDERING:
+            case QuestionType::MATCHING:
+                $answer = is_array($correctAnswer) ? implode(', ', $correctAnswer) : $correctAnswer;
+
+                return "<span style='color: green;'>{$answer}</span>";
+
+            default:
+                return 'N/A';
+        }
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function quizzes()
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_questions')
+            ->using(QuizQuestion::class)
+            ->withPivot('order');
     }
 }
