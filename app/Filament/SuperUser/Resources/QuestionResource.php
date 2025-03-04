@@ -21,6 +21,8 @@ class QuestionResource extends Resource
 
     protected static ?string $navigationGroup = 'Quizzes';
 
+    protected static ?int $navigationSort = 2;
+
     public static function canViewAny(): bool
     {
         return ($user = auth()->user()) && $user->can('viewAny', Question::class);
@@ -30,32 +32,37 @@ class QuestionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('text')
-                    ->label('Question Text')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('question_type')
-                    ->label('Type')
-                    ->options(collect(QuestionType::cases())->pluck('value', 'value')->toArray())
-                    ->required(),
-                Forms\Components\Select::make('difficulty')
-                    ->label('Difficulty')
-                    ->options(collect(QuestionDifficulty::cases())->pluck('value', 'value')->toArray())
-                    ->required(),
-                Forms\Components\Select::make('category_id')
-                    ->label('Category')
-                    ->options(Category::pluck('name', 'id')->toArray())
-                    ->required()
-                    ->searchable(),
-                Forms\Components\KeyValue::make('options')
-                    ->label('Options')
-                    ->nullable()
-                    ->keyLabel('Option Key')
-                    ->valueLabel('Option Value'),
-                Forms\Components\TextInput::make('correct_answer')
-                    ->label('Correct Answer')
-                    ->required()
-                    ->helperText('Enter as JSON, e.g., ["A"] for multiple choice or "true" for boolean.'),
+                Forms\Components\Section::make()
+                    ->inlineLabel()
+                    ->schema([
+                        Forms\Components\TextInput::make('text')
+                            ->label('Question Text')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Select::make('question_type')
+                            ->label('Type')
+                            ->options(QuestionType::getLabels())
+                            ->required(),
+                        Forms\Components\Select::make('difficulty')
+                            ->label('Difficulty')
+                            ->options(QuestionDifficulty::getLabels())
+                            ->default(QuestionDifficulty::EASY->value)
+                            ->required(),
+                        Forms\Components\Select::make('category_id')
+                            ->label('Category')
+                            ->options(Category::pluck('name', 'id')->toArray())
+                            ->required()
+                            ->searchable(),
+                        Forms\Components\KeyValue::make('options')
+                            ->label('Options')
+                            ->nullable()
+                            ->keyLabel('Option Key')
+                            ->valueLabel('Option Value'),
+                        Forms\Components\TextInput::make('correct_answer')
+                            ->label('Correct Answer')
+                            ->required()
+                            ->helperText('Enter as JSON, e.g., ["A"] for multiple choice or "true" for boolean.'),
+                    ]),
             ]);
     }
 
@@ -68,9 +75,11 @@ class QuestionResource extends Resource
                     ->sortable()
                     ->limit(50),
                 Tables\Columns\TextColumn::make('question_type')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (QuestionType $state) => $state->getLabel()),
                 Tables\Columns\TextColumn::make('difficulty')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (QuestionDifficulty $state) => $state->getLabel()),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Category')
                     ->sortable(),

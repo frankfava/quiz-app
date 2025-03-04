@@ -18,6 +18,8 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationGroup = 'Quizzes';
 
+    protected static ?int $navigationSort = 3;
+
     public static function canViewAny(): bool
     {
         return ($user = auth()->user()) && $user->can('viewAny', Category::class);
@@ -27,22 +29,17 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255)
-                    ->reactive()
-                    ->afterStateUpdated(function ($state, callable $set) {
-                        $set('slug', \Illuminate\Support\Str::slug($state));
-                    }),
-                Forms\Components\TextInput::make('slug')
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(Category::class, 'slug', ignoreRecord: true)
-                    ->helperText('Automatically generated from name if not provided.'),
-                Forms\Components\Textarea::make('description')
-                    ->label('Description')
-                    ->nullable()
-                    ->maxLength(65535),
+                Forms\Components\Section::make()
+                    ->inlineLabel()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Description')
+                            ->nullable()
+                            ->maxLength(65535),
+                    ]),
             ]);
     }
 
@@ -51,9 +48,6 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('slug')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')

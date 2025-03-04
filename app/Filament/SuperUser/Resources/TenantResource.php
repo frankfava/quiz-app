@@ -97,7 +97,9 @@ class TenantResource extends Resource
                     ->relationship(
                         name : 'users',
                         titleAttribute : 'name',
-                        modifyQueryUsing : fn (Builder $query) => $query->addSelect(DB::raw("CONCAT(users.first_name,' ',users.last_name) AS name"))->orderBy('name')
+                        modifyQueryUsing : fn (Builder $query) => $query
+							->addSelect(DB::raw("(users.first_name || ' ' || users.last_name) AS name"))
+							->orderBy('name')
                     ),
             ])
             ->actions([

@@ -96,8 +96,8 @@ class SuperUserPanelProvider extends PanelProvider
             ->globalSearchKeyBindings(['command+k'])
             ->navigationGroups([
                 NavigationGroup::make('Resources'),
+                NavigationGroup::make('Tools'),
                 NavigationGroup::make('Users'),
-                NavigationGroup::make('Management'),
             ]);
 
         return $this;
