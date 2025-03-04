@@ -17,9 +17,16 @@ class FetchTriviaQuestions
 
     protected ?Closure $onCompletion;
 
+    const CREATED_QUESTION = 'CREATED_QUESTION';
+
     const DUPLICATE_QUESTION = 'DUPLICATE_QUESTION';
 
     const INVALID_QUESTION = 'INVALID_QUESTION';
+
+    const OPEN_TRIVIA_TYPES = [
+        'multiple' => 'Multiple Choice',
+        'boolean' => 'True / False',
+    ];
 
     const OPEN_TRIVIA_CATEGORIES = [
         9 => 'General Knowledge',
@@ -48,6 +55,12 @@ class FetchTriviaQuestions
         32 => 'Entertainment: Cartoon & Animations',
     ];
 
+    const OPEN_TRIVIA_DIFFICULTIES = [
+        'easy' => 'Easy',
+        'medium' => 'Medium',
+        'hard' => 'Hard',
+    ];
+
     public function __construct(
         readonly protected ?int $totalQuestions = 1000,
         readonly protected ?QuestionDifficulty $difficulty = null,
@@ -65,6 +78,7 @@ class FetchTriviaQuestions
     {
         $result = (object) [
             'fetchedQuestions' => 0,
+            'fetchedQuestionIds' => [],
             'successful' => 0,
             'duplicates' => 0,
             'failed' => 0,
@@ -105,11 +119,17 @@ class FetchTriviaQuestions
                     }
                     $result->fetchedQuestions++;
 
-                    match ($this->storeQuestion($question)) {
-                        true => $result->successful++,
+                    ['status' => $status,'question' => $question] = $this->storeQuestion($question);
+
+                    match ($status) {
+                        self::CREATED_QUESTION => $result->successful++,
                         self::DUPLICATE_QUESTION => $result->duplicates++,
                         default => $result->failed++,
                     };
+
+                    if ($question instanceof Question) {
+                        $result->fetchedQuestionIds[] = $question->id;
+                    }
                 }
             }
 
@@ -125,8 +145,19 @@ class FetchTriviaQuestions
         return $result;
     }
 
-    protected function storeQuestion(array $questionData): true|string
+    protected function storeQuestion(array $questionData): array
     {
+        /** @var string */
+        $status = self::INVALID_QUESTION;
+
+        /** @var Question */
+        $question = null;
+
+        $questionData['question'] = html_entity_decode(htmlspecialchars_decode($questionData['question']), ENT_QUOTES, 'UTF-8');
+        $questionData['category'] = html_entity_decode(htmlspecialchars_decode($questionData['category']));
+        $questionData['correct_answer'] = htmlspecialchars_decode($questionData['correct_answer']);
+        $questionData['incorrect_answers'] = json_decode(htmlspecialchars_decode(json_encode($questionData['incorrect_answers'] ?? null)), 1);
+
         try {
             $contentHash = Question::generateContentHash($questionData);
 
@@ -140,36 +171,42 @@ class FetchTriviaQuestions
                 };
 
                 $options = match ($questionType) {
-                    QuestionType::MULTIPLE_CHOICE => collect(array_merge([$questionData['correct_answer']], $questionData['incorrect_answers']))->shuffle()->toArray(),
+                    QuestionType::MULTIPLE_CHOICE => collect(array_merge([$questionData['correct_answer']], $questionData['incorrect_answers'] ?? []))->shuffle()->toArray(),
                     default => null,
                 };
 
                 $mappedOptions = match ($questionType) {
-                    QuestionType::MULTIPLE_CHOICE => array_combine(['A', 'B', 'C', 'D'], $options),
+                    QuestionType::MULTIPLE_CHOICE => array_combine(array_map(
+                        fn ($index) => chr(65 + $index), // 65 is ASCII for 'A'
+                        range(0, count($options) - 1)
+                    ), $options),
                     default => null,
                 };
 
-                Question::forceCreate([
+                $status = self::CREATED_QUESTION;
+                $question = Question::create([
                     'text' => $questionData['question'],
                     'question_type' => $questionType,
-                    'category_id' => $this->getCategoryId($questionData['category']),
                     'difficulty' => $questionData['difficulty'],
+                    'category_id' => $this->getCategoryId($questionData['category']),
                     'options' => $mappedOptions,
                     'correct_answer' => $questionType === QuestionType::MULTIPLE_CHOICE
                         ? [array_search($questionData['correct_answer'], $mappedOptions)]
                         : (bool) ($questionData['correct_answer'] == 'True'),
                     'content_hash' => $contentHash,
                 ]);
-
-                return true;
             } else {
-                return self::DUPLICATE_QUESTION;
+                $status = self::DUPLICATE_QUESTION;
+                $question = $existingQuestion;
             }
         } catch (\Exception $e) {
-            return self::INVALID_QUESTION;
+            $status = self::INVALID_QUESTION;
         }
 
-        return self::INVALID_QUESTION;
+        return [
+            'status' => $status,
+            'question' => $question,
+        ];
     }
 
     /** Create or Get Category Model */

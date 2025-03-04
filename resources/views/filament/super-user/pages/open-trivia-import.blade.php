@@ -6,4 +6,12 @@
             :full-width="$this->hasFullWidthFormActions()"
         />
     </x-filament-panels::form>
+
+    <div>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            {{ __('Imported Questions') }}
+        </h2>
+        {{ $this->table }}
+    </div>
+
 </x-filament-panels::page>

@@ -73,7 +73,8 @@ class QuestionResource extends Resource
                 Tables\Columns\TextColumn::make('text')
                     ->searchable()
                     ->sortable()
-                    ->limit(50),
+                    ->width('5/12')
+                    ->extraAttributes(['class' => 'whitespace-normal']),
                 Tables\Columns\TextColumn::make('question_type')
                     ->sortable()
                     ->formatStateUsing(fn (QuestionType $state) => $state->getLabel()),
@@ -83,17 +84,14 @@ class QuestionResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Category')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('correct_answer')
-                    ->formatStateUsing(fn ($state) => json_encode($state))
-                    ->limit(20),
             ])
             ->paginationPageOptions([10, 25, 50, 100])
             ->defaultPaginationPageOption(100)
             ->filters([
                 Tables\Filters\SelectFilter::make('question_type')
-                    ->options(collect(QuestionType::cases())->pluck('value', 'value')->toArray()),
+                    ->options(QuestionType::getLabels()),
                 Tables\Filters\SelectFilter::make('difficulty')
-                    ->options(collect(QuestionDifficulty::cases())->pluck('value', 'value')->toArray()),
+                    ->options(QuestionDifficulty::getLabels()),
                 Tables\Filters\SelectFilter::make('category_id')
                     ->label('Category')
                     ->options(Category::pluck('name', 'id')->toArray()),

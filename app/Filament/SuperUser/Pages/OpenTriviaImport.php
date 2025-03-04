@@ -3,21 +3,33 @@
 namespace App\Filament\SuperUser\Pages;
 
 use App\Actions\FetchTriviaQuestions;
+use App\Enums\QuestionDifficulty;
+use App\Enums\QuestionType;
+use App\Filament\SuperUser\Resources\QuestionResource;
+use App\Models\Category;
+use App\Models\Question;
 use App\Models\SuperUser;
 use Filament\Actions\Action;
 use Filament\Forms\Components;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Concerns\InteractsWithFormActions;
 use Filament\Pages\Page;
+use Filament\Tables;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Table;
 use Illuminate\Validation\ValidationException;
 
-class OpenTriviaImport extends Page implements HasForms
+use function Filament\authorize;
+
+class OpenTriviaImport extends Page implements HasForms, HasTable
 {
     use InteractsWithFormActions,
-        InteractsWithForms;
+        InteractsWithForms,
+        InteractsWithTable;
 
     protected static string $view = 'filament.super-user.pages.open-trivia-import';
 
@@ -57,7 +69,7 @@ class OpenTriviaImport extends Page implements HasForms
     protected function defaultData(): array
     {
         return [
-            'amount' => 100,
+            'amount' => 50,
             'category' => null,
             'type' => null,
             'difficulty' => null,
@@ -90,21 +102,14 @@ class OpenTriviaImport extends Page implements HasForms
                         ->rules(['nullable', 'in:'.implode(',', array_keys(FetchTriviaQuestions::OPEN_TRIVIA_CATEGORIES))]),
                     Components\Select::make('type')
                         ->label('Question Type')
-                        ->options([
-                            'multiple' => 'Multiple Choice',
-                            'boolean' => 'True/False',
-                        ])
+                        ->options(FetchTriviaQuestions::OPEN_TRIVIA_TYPES)
                         ->placeholder('Any')
-                        ->rules(['nullable', 'in:multiple,boolean']),
+                        ->rules(['nullable', 'in:'.implode(',', array_keys(FetchTriviaQuestions::OPEN_TRIVIA_TYPES))]),
                     Components\Select::make('difficulty')
                         ->label('Difficulty')
-                        ->options([
-                            'easy' => 'Easy',
-                            'medium' => 'Medium',
-                            'hard' => 'Hard',
-                        ])
+                        ->options(FetchTriviaQuestions::OPEN_TRIVIA_DIFFICULTIES)
                         ->placeholder('Any')
-                        ->rules(['nullable', 'in:easy,medium,hard']),
+                        ->rules(['nullable', 'in:'.implode(',', array_keys(FetchTriviaQuestions::OPEN_TRIVIA_DIFFICULTIES))]),
                 ]),
         ];
     }
@@ -114,17 +119,69 @@ class OpenTriviaImport extends Page implements HasForms
         return [
             Action::make('reset')
                 ->label('Reset')
-                ->action(fn () => $this->setDefaultData())
+                ->action(fn () => $this->resetForm())
                 ->color('gray'),
             Action::make('import')
                 ->label('Import Questions')
                 ->requiresConfirmation()
                 ->extraAttributes(['class' => 'ml-auto'])
                 ->modalIcon('heroicon-o-arrow-up-on-square')
-                ->modalDescription('Are you sure you\'d like to reset the data? You will lose all unsaved changes.')
+                ->modalDescription('Click confirm to import questions from the OpenTrivia Database.')
                 ->keyBindings(['mod+s'])
                 ->action(fn () => $this->save()),
         ];
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(Question::query()->whereIn('id', $this->importedQuestions ?? []))
+            ->groups([
+                Group::make('question_type')
+                    ->collapsible()
+                    ->getTitleFromRecordUsing(fn (Question $record): string => $record->question_type->getLabel()),
+                Group::make('difficulty')
+                    ->collapsible()
+                    ->getTitleFromRecordUsing(fn (Question $record): string => $record->difficulty->getLabel()),
+                Group::make('category.name')->collapsible(),
+            ])
+            ->defaultGroup('question_type')
+            ->groupingDirectionSettingHidden()
+            ->columns([
+                Tables\Columns\TextColumn::make('text')
+                    ->searchable()
+                    ->sortable()
+                    ->width('5/12')
+                    ->extraAttributes(['class' => 'whitespace-normal']),
+                Tables\Columns\TextColumn::make('question_type')
+                    ->sortable()
+                    ->formatStateUsing(fn (QuestionType $state) => $state->getLabel()),
+                Tables\Columns\TextColumn::make('difficulty')
+                    ->sortable()
+                    ->formatStateUsing(fn (QuestionDifficulty $state) => $state->getLabel()),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Category')
+                    ->sortable(),
+            ])
+            ->paginationPageOptions([10, 25])
+            ->defaultPaginationPageOption(25)
+            ->filters([
+                Tables\Filters\SelectFilter::make('question_type')
+                    ->options(QuestionType::getLabels()),
+                Tables\Filters\SelectFilter::make('difficulty')
+                    ->options(QuestionDifficulty::getLabels()),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->options(Category::pluck('name', 'id')->toArray()),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()
+                    ->url(fn (Question $record): string => QuestionResource::getUrl('edit', [$record]))
+                    ->visible(fn (Question $record) => authorize('update', $record)),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->emptyStateHeading('No Imported Questions yet')
+            ->emptyStateDescription('Imported questions from the OpenTrivia Database will show here.');
     }
 
     // Define a method to handle the form submission
@@ -132,12 +189,24 @@ class OpenTriviaImport extends Page implements HasForms
     {
         $this->authorizeAccess();
 
-        $result = $this->importData();
+        $this->importedQuestions = [];
+
+        [
+            'fetchedQuestions' => $total,
+            'fetchedQuestionIds' => $ids,
+            'successful' => $successful,
+            'duplicates' => $duplicates,
+            'failed' => $failed,
+        ] = (array) $this->importData();
 
         $this->getNotification(
-            "Imported {$result->successful} questions. Duplicates: {$result->duplicates}, Failed: {$result->failed}",
-            $result->successful > 0 ? 'success' : 'danger',
+            "Imported {$successful} ".str('question')->plural($successful)." successfully of {$total} ".str('question')->plural($total).". Duplicates: {$duplicates}, Failed: {$failed}",
+            $successful > 0 ? 'success' : 'danger',
         )->send();
+
+        if (! empty($ids)) {
+            $this->importedQuestions = $ids;
+        }
 
         // Reset
         $this->setDefaultData();
@@ -157,6 +226,13 @@ class OpenTriviaImport extends Page implements HasForms
         );
 
         return $fetcher->execute();
+    }
+
+    public function resetForm(): void
+    {
+        $this->setDefaultData();
+
+        $this->importedQuestions = [];
     }
 
     public function setDefaultData(): void
