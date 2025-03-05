@@ -8,6 +8,7 @@ use Filament\Models\Contracts\HasCurrentTenantLabel;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
 {
@@ -87,6 +88,11 @@ class Tenant extends BaseTenant implements HasCurrentTenantLabel, HasName
                 ->orderBy('pivot_created_at')
                 ->first();
         });
+    }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
     }
 
     /* ======= Filament Tenant Setup ======= */

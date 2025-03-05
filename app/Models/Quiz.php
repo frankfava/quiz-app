@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\QuizStatus;
+use App\Relationships\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Quiz extends Model
 {
-    use HasFactory;
+    use HasFactory,
+        HasTenant;
 
     protected $fillable = [
         'label',
@@ -52,11 +54,6 @@ class Quiz extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'created_by_id');
-    }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
     }
 
     public function questions()
