@@ -21,15 +21,17 @@ Route::group(['domain' => tenancy()->mainDomain()], function () {
     Route::fallback(fn () => redirect()->route('base'));
 });
 
+Route::get('/login', fn () => redirect()->route('filament.admin.auth.login'))->name('login');
+
 // Tenant
 Route::name('tenant.')
     ->middleware([\App\Tenancy\Middleware\CustomDomains::class])
     ->domain('{domain}')
     ->where(['domain' => '.*'])
     ->group(function () {
-        Route::get('/{any?}', function (Request $request) {
-            return Blade::render('<pre>{{ print_r($tenant->toArray(),1) }}</pre>', ['tenant' => $request->tenant->load('users')]);
-        })
+        Route::get('/', fn (Request $request) => Blade::render('<pre>{{ print_r($tenant->toArray(),1) }}</pre>', ['tenant' => $request->tenant->load('users')]))->name('app');
+
+        Route::get('/{any?}', fn (Request $request) => $request->fullUrl())
             ->where(['any' => '.*'])
-            ->name('app');
+            ->name('any');
     });
