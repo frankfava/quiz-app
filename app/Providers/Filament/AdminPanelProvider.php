@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\User\Pages;
+use App\Filament\User\Resources;
 use App\Models\Tenant;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -113,7 +114,7 @@ class AdminPanelProvider extends PanelProvider
             ])
 
             ->navigationGroups([
-                NavigationGroup::make('Resources'),
+                NavigationGroup::make('Quizzes'),
                 NavigationGroup::make('Access'),
                 NavigationGroup::make('Settings'),
             ])
@@ -141,6 +142,12 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn (): string => Pages\Tenancy\EditTenantProfile::getUrl())
                     ->group(Pages\Tenancy\EditTenantProfile::getNavigationGroup())
                     ->icon(Pages\Tenancy\EditTenantProfile::getNavigationIcon()),
+
+                Navigation\NavigationItem::make()
+                    ->url(fn (): string => Resources\QuizResource::getUrl())
+                    ->label(Resources\QuizResource::getNavigationLabel())
+                    ->group(Resources\QuizResource::getNavigationGroup())
+                    ->icon(Resources\QuizResource::getNavigationIcon()),
             ]);
 
         return $this;

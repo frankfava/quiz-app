@@ -9,7 +9,7 @@ class QuestionPolicy
 {
     public function viewAny($user): bool
     {
-        return $user instanceof SuperUser;
+        return true;
     }
 
     public function view($user, Question $question): bool
@@ -38,6 +38,21 @@ class QuestionPolicy
     }
 
     public function forceDelete($user, Question $question): bool
+    {
+        return $user instanceof SuperUser;
+    }
+
+    public function attach($user): bool
+    {
+        return $user instanceof SuperUser;
+    }
+
+    public function detach($user, Question $question): bool
+    {
+        return $user instanceof SuperUser;
+    }
+
+    public function detachAny($user): bool
     {
         return $user instanceof SuperUser;
     }
