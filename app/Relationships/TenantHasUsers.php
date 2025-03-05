@@ -22,7 +22,7 @@ trait TenantHasUsers
             return false;
         }
 
-        return $user->canAccessTenant($this);
+        return $this->users->contains($user);
     }
 
     public function addUsers(array $users = [], ?string $role = null)

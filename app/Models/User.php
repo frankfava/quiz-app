@@ -99,16 +99,9 @@ class User extends Authenticatable implements FilamentUser, HasName, HasTenants
         return $this->tenants;
     }
 
-    public function canAccessTenant(Model $tenant): bool
+    public function canAccessTenant(?Model $tenant = null): bool
     {
-        return $this->tenants->contains($tenant);
-    }
-
-    public function deleteUserFromTenants()
-    {
-        $this->tenants->each(function ($tenant) {
-            $tenant->removeUser($this);
-        });
+        return $this->hasTenantAccess($tenant);
     }
 
     /* ======= Scopes ======= */

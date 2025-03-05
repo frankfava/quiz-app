@@ -58,10 +58,17 @@ trait UserHasTenants
         return $tenant->removeUser($this);
     }
 
-    public function canAccessTenant(?Tenant $tenant = null)
+    public function hasTenantAccess(?Tenant $tenant = null)
     {
         $tenant = $tenant ?? Tenant::current();
 
-        return $tenant ? $tenant->userCanAccess($this) : false;
+        return $this->tenants->contains($tenant);
+    }
+
+    public function deleteUserFromTenants()
+    {
+        $this->tenants->each(function ($tenant) {
+            $tenant->removeUser($this);
+        });
     }
 }

@@ -15,7 +15,7 @@ class QuizPolicy
 
     public function view($user, Quiz $quiz): bool
     {
-        return $user instanceof SuperUser || $user->id === $quiz->created_by_id;
+        return $user instanceof SuperUser || ($user instanceof User && $user->canAccessTenant());
     }
 
     public function create($user): bool
@@ -25,12 +25,12 @@ class QuizPolicy
 
     public function update($user, Quiz $quiz): bool
     {
-        return $user instanceof SuperUser || $user->id === $quiz->created_by_id;
+        return $user instanceof SuperUser || ($user instanceof User && $user->canAccessTenant());
     }
 
     public function delete($user, Quiz $quiz): bool
     {
-        return $user instanceof SuperUser || $user->id === $quiz->created_by_id;
+        return $user instanceof SuperUser || ($user instanceof User && $user->canAccessTenant());
     }
 
     public function restore($user, Quiz $quiz): bool
