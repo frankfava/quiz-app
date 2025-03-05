@@ -201,6 +201,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \App\Filament\Shared\Middleware\FilamentRenderHooks::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
