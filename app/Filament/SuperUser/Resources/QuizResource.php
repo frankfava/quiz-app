@@ -2,8 +2,8 @@
 
 namespace App\Filament\SuperUser\Resources;
 
+use App\Filament\Shared\RelationManagers as SharedRelationManagers;
 use App\Filament\SuperUser\Resources\QuizResource\Pages;
-use App\Filament\SuperUser\Resources\QuizResource\RelationManagers;
 use App\Models\Quiz;
 use App\Models\Tenant;
 use App\Models\User;
@@ -109,7 +109,7 @@ class QuizResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\QuestionsRelationManager::class,
+            SharedRelationManagers\QuestionsRelationManager::class,
         ];
     }
 }

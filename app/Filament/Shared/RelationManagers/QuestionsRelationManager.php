@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\SuperUser\Resources\QuizResource\RelationManagers;
+namespace App\Filament\Shared\RelationManagers;
 
 use App\Enums\QuestionDifficulty;
 use App\Enums\QuestionType;

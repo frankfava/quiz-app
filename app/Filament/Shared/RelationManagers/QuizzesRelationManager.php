@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\SuperUser\Resources\QuestionResource\RelationManagers;
+namespace App\Filament\Shared\RelationManagers;
 
 use App\Models\Tenant;
 use Filament\Forms;
