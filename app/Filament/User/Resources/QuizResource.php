@@ -5,6 +5,7 @@ namespace App\Filament\User\Resources;
 use App\Filament\Resource;
 use App\Filament\Shared\RelationManagers as SharedRelationManagers;
 use App\Filament\User\Resources\QuizResource\Pages;
+use App\Filament\User\Resources\QuizResource\RelationManagers;
 use App\Filament\User\Resources\QuizResource\Widgets\GenerateQuizWidget;
 use App\Models\Quiz;
 use Filament\Forms;
@@ -35,6 +36,10 @@ class QuizResource extends Resource
                         Forms\Components\TextInput::make('label')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('type')
+                            ->label('Quiz Type')
+                            ->placeholder('e.g., standard, timed')
+                            ->nullable(),
                     ]),
                 Forms\Components\Livewire::make(GenerateQuizWidget::class)
                     ->hidden(fn ($operation) => $operation != 'edit'),
@@ -47,6 +52,9 @@ class QuizResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('label')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('owner.name')
                     ->label('Owner')
@@ -93,6 +101,7 @@ class QuizResource extends Resource
     {
         return [
             SharedRelationManagers\QuestionsRelationManager::class,
+            RelationManagers\SubmissionsRelationManager::class,
         ];
     }
 

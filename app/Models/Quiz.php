@@ -15,8 +15,8 @@ class Quiz extends Model
     protected $fillable = [
         'label',
         'tenant_id',
+        'type',
         'status',
-        'created_by_id',
         'meta',
     ];
 
@@ -27,6 +27,15 @@ class Quiz extends Model
         'created_by_id' => 'integer',
         'meta' => 'json',
     ];
+
+    public static function booted()
+    {
+        static::creating(function (self $quiz) {
+            if (empty($quiz->created_by_id)) {
+                $quiz->created_by_id = auth()->check() ? auth()->id() : null;
+            }
+        });
+    }
 
     /** Scope to get quizzes by status */
     public function scopeByStatus($query, QuizStatus $status)
@@ -62,5 +71,10 @@ class Quiz extends Model
             ->using(QuizQuestion::class)
             ->withPivot('order')
             ->orderBy('quiz_questions.order');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(QuizSubmission::class);
     }
 }

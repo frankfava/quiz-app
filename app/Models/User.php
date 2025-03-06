@@ -111,4 +111,11 @@ class User extends Authenticatable implements FilamentUser, HasName, HasTenants
         $query
             ->whereNotNull('email_verified_at');
     }
+
+    /* ======= Relationships ======= */
+
+    public function quizSubmissions()
+    {
+        return $this->hasMany(QuizSubmission::class);
+    }
 }
