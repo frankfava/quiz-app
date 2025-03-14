@@ -72,6 +72,13 @@ class QuizResource extends Resource
                     ->state(function (Quiz $record) {
                         return $record->questions->count();
                     }),
+                Tables\Columns\TextColumn::make('contestant_count')
+                    ->label('Contestants')
+                    ->numeric()
+                    ->alignCenter()
+                    ->state(function (Quiz $record) {
+                        return $record->contestants->count();
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -107,6 +114,7 @@ class QuizResource extends Resource
         return [
             SharedRelationManagers\QuestionsRelationManager::class,
             RelationManagers\SubmissionsRelationManager::class,
+            RelationManagers\ContestantsRelationManager::class,
         ];
     }
 

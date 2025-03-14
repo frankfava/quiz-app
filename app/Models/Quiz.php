@@ -78,6 +78,11 @@ class Quiz extends Model
             ->orderBy('quiz_questions.order');
     }
 
+    public function contestants()
+    {
+        return $this->hasMany(QuizContestant::class);
+    }
+
     public function submissions()
     {
         return $this->hasMany(QuizSubmission::class);
