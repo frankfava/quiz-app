@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuizStatus;
+use App\Enums\QuizType;
 use App\Relationships\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,8 +16,8 @@ class Quiz extends Model
     protected $fillable = [
         'label',
         'tenant_id',
-        'type',
         'status',
+        'type',
         'meta',
     ];
 
@@ -24,6 +25,7 @@ class Quiz extends Model
         'label' => 'string',
         'tenant_id' => 'integer',
         'status' => QuizStatus::class,
+        'type' => QuizType::class,
         'created_by_id' => 'integer',
         'meta' => 'json',
     ];
@@ -33,6 +35,9 @@ class Quiz extends Model
         static::creating(function (self $quiz) {
             if (empty($quiz->created_by_id)) {
                 $quiz->created_by_id = auth()->check() ? auth()->id() : null;
+            }
+            if (empty($quiz->type)) {
+                $quiz->type = QuizType::FOLLOW_ALONG->value;
             }
         });
     }

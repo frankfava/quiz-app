@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Shared\RelationManagers;
+namespace App\Filament\SuperUser\Resources\QuestionResource\RelationManagers;
 
+use App\Enums\QuizType;
 use App\Models\Tenant;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -35,6 +36,9 @@ class QuizzesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('label')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->sortable()
+                    ->formatStateUsing(fn (QuizType $state) => $state->getLabel()),
                 Tables\Columns\TextColumn::make('tenant.name')
                     ->label('Tenant')
                     ->sortable(),

@@ -4,8 +4,8 @@ namespace App\Filament\SuperUser\Resources;
 
 use App\Enums\QuestionDifficulty;
 use App\Enums\QuestionType;
-use App\Filament\Shared\RelationManagers as SharedRelationManagers;
 use App\Filament\SuperUser\Resources\QuestionResource\Pages;
+use App\Filament\SuperUser\Resources\QuestionResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Question;
 use Filament\Forms;
@@ -135,7 +135,7 @@ class QuestionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            SharedRelationManagers\QuizzesRelationManager::class,
+            RelationManagers\QuizzesRelationManager::class,
         ];
     }
 }

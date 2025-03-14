@@ -2,6 +2,7 @@
 
 namespace App\Filament\User\Resources;
 
+use App\Enums\QuizType;
 use App\Filament\Resource;
 use App\Filament\Shared\RelationManagers as SharedRelationManagers;
 use App\Filament\User\Resources\QuizResource\Pages;
@@ -36,10 +37,12 @@ class QuizResource extends Resource
                         Forms\Components\TextInput::make('label')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('type')
-                            ->label('Quiz Type')
-                            ->placeholder('e.g., standard, timed')
-                            ->nullable(),
+                        Forms\Components\Select::make('type')
+                            ->hidden()
+                            ->label('Type')
+                            ->options(QuizType::getLabels())
+                            ->required()
+                            ->disabled(),
                     ]),
                 Forms\Components\Livewire::make(GenerateQuizWidget::class)
                     ->hidden(fn ($operation) => $operation != 'edit'),
@@ -54,12 +57,14 @@ class QuizResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Type')
-                    ->sortable(),
+                    ->hidden()
+                    ->sortable()
+                    ->formatStateUsing(fn (QuizType $state) => $state->getLabel()),
                 Tables\Columns\TextColumn::make('owner.name')
                     ->label('Owner')
                     ->disabled()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('N/A'),
                 Tables\Columns\TextColumn::make('question_count')
                     ->label('Questions')
                     ->numeric()
