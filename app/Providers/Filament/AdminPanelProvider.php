@@ -15,6 +15,7 @@ use Filament\Pages as FilamentPages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Tables\Table;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -223,7 +224,11 @@ class AdminPanelProvider extends PanelProvider
     private function panelBoot(): static
     {
         $this->panel->bootUsing(function (Panel $panel) {
-            //
+            Table::configureUsing(function (Table $table): void {
+                $table
+                    ->defaultPaginationPageOption(25)
+                    ->paginationPageOptions([10, 25, 50, 100]);
+            });
         });
 
         return $this;

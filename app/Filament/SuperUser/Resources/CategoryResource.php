@@ -59,8 +59,6 @@ class CategoryResource extends Resource
                     ->counts('questions')
                     ->sortable(),
             ])
-            ->paginationPageOptions([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->filters([
                 //
             ])

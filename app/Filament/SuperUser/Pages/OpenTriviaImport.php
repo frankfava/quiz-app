@@ -163,8 +163,6 @@ class OpenTriviaImport extends Page implements HasForms, HasTable
                     ->label('Category')
                     ->sortable(),
             ])
-            ->paginationPageOptions([10, 25])
-            ->defaultPaginationPageOption(25)
             ->filters([
                 Tables\Filters\SelectFilter::make('question_type')
                     ->options(QuestionType::getLabels()),

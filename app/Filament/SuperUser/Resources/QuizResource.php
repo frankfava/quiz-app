@@ -81,8 +81,6 @@ class QuizResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->paginationPageOptions([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->filters([
                 Tables\Filters\SelectFilter::make('tenant_id')
                     ->label('Tenant')
