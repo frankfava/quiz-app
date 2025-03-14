@@ -2,6 +2,7 @@
 
 namespace App\Filament\SuperUser\Resources;
 
+use App\Filament\Shared\RelationManagers as SharedRelationManagers;
 use App\Filament\SuperUser\Resources\CategoryResource\Pages;
 use App\Models\Category;
 use Filament\Forms;
@@ -78,6 +79,13 @@ class CategoryResource extends Resource
             'index' => Pages\ListCategories::route('/'),
             'create' => Pages\CreateCategory::route('/create'),
             'edit' => Pages\EditCategory::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            SharedRelationManagers\QuestionsRelationManager::make(),
         ];
     }
 }

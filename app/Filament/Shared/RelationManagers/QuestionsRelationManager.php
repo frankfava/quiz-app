@@ -37,7 +37,7 @@ class QuestionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->description('Questions that belong to this quiz.')
+            ->description('Questions that belong to this '.str(class_basename($this->getOwnerRecord()))->headline()->lcfirst()->toString().'.')
             ->recordTitleAttribute('text')
             ->columns([
                 Tables\Columns\TextColumn::make('text')
@@ -74,14 +74,14 @@ class QuestionsRelationManager extends RelationManager
                     ->label('Remove')
                     ->requiresConfirmation()
                     ->modalHeading('Remove Question')
-                    ->modalDescription('Are you sure you want to remove this question from the quiz?'),
+                    ->modalDescription('Are you sure you want to remove this question from the '.str(class_basename($this->getOwnerRecord()))->headline()->lcfirst()->toString().'?'),
             ])
             ->bulkActions([
                 Tables\Actions\DetachBulkAction::make()
                     ->label('Remove Questions')
                     ->requiresConfirmation()
                     ->modalHeading('Remove Questions')
-                    ->modalDescription('Are you sure you want to remove the selected questions from the quiz?'),
+                    ->modalDescription('Are you sure you want to remove the selected questions from the '.str(class_basename($this->getOwnerRecord()))->headline()->lcfirst()->toString().'?'),
             ])
             ->reorderable('order')
             ->reorderRecordsTriggerAction(
@@ -90,6 +90,6 @@ class QuestionsRelationManager extends RelationManager
                     ->label($isReordering ? 'Save Order' : 'Reorder'),
             )
             ->emptyStateHeading('No Quiz Questions yet')
-            ->emptyStateDescription('Questions that are connected to this quiz will show here.');
+            ->emptyStateDescription('Questions that are connected to this '.str(class_basename($this->getOwnerRecord()))->headline()->lcfirst()->toString().' will show here.');
     }
 }
